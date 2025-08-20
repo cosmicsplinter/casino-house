@@ -33,6 +33,10 @@ export function AuthMagicForm({
   const [remember, setRemember] = useState(true)
   const [hasRequestedLink, setHasRequestedLink] = useState(false)
 
+  // Use env-defined base URL in production to avoid localhost links in emails
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "")
+
   // cooldown ticker
   useEffect(() => {
     if (cooldown <= 0) return
@@ -45,7 +49,7 @@ export function AuthMagicForm({
     setLoading(true)
     try {
       if (typeof window !== "undefined") localStorage.setItem("remember_me", remember ? "1" : "0")
-      const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/dashboard?remember=${remember ? 1 : 0}` : undefined
+      const redirectTo = baseUrl ? `${baseUrl}/dashboard?remember=${remember ? 1 : 0}` : undefined
       const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } })
       if (error) throw error
       toast.success("Magic link sent. Check your email.")
@@ -75,7 +79,7 @@ export function AuthMagicForm({
               className="w-full justify-start gap-2"
               onClick={async () => {
                 try {
-                  const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/dashboard` : undefined
+                  const redirectTo = baseUrl ? `${baseUrl}/dashboard` : undefined
                   const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo } })
                   if (error) throw error
                 } catch (err: unknown) {
@@ -145,7 +149,7 @@ export function AuthMagicForm({
                     try {
                       setResending(true)
                       if (typeof window !== "undefined") localStorage.setItem("remember_me", remember ? "1" : "0")
-                      const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/dashboard?remember=${remember ? 1 : 0}` : undefined
+                      const redirectTo = baseUrl ? `${baseUrl}/dashboard?remember=${remember ? 1 : 0}` : undefined
                       const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } })
                       if (error) throw error
                       toast.success("Magic link re-sent")
