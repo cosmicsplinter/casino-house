@@ -43,6 +43,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<UserProfile>(defaultUser)
 
   const [authed, setAuthed] = React.useState(false)
+  // Track hydration to prevent overwriting saved profile with defaults before load
+  const [hydrated, setHydrated] = React.useState(false)
 
   // Client-only hydration from localStorage to avoid SSR mismatches
   React.useEffect(() => {
@@ -61,6 +63,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       }))
     } catch {
       // ignore
+    } finally {
+      // Mark hydration attempt complete regardless of outcome
+      setHydrated(true)
     }
   }, [])
 
@@ -115,12 +120,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   // Also persist whenever user changes (fallback persistence)
   React.useEffect(() => {
+    // Avoid clobbering existing saved profile with defaults before hydration
+    if (!hydrated) return
     try {
       if (typeof window !== "undefined") localStorage.setItem("user_profile", JSON.stringify(user))
     } catch {
       // ignore
     }
-  }, [user])
+  }, [user, hydrated])
 
   const value = React.useMemo(() => ({ user, authed, updateUser }), [user, authed, updateUser])
 
